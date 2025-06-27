@@ -2,59 +2,53 @@
 
 namespace Probots\Pinecone;
 
-use Probots\Pinecone\Resources\Data;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Log\LoggerAwareInterface;
-use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
+use Saloon\Http\Connector;
+use Saloon\Traits\Plugins\AcceptsJson;
 
-class Client implements LoggerAwareInterface
+class Client extends Connector
 {
-    use HandlesGuzzle;
-
-    /**
-     * @param string $apiKey
-     * @param string $baseUrl
-     * @param LoggerInterface|null $logger
-     */
-    public function __construct(
-        protected string $apiKey,
-        protected string $baseUrl,
-        protected ?LoggerInterface $logger = null,
-    ) {
-        $this->client = new \GuzzleHttp\Client([
-            'base_uri' => $this->baseUrl,
-            'headers' => [
-                'Api-Key' => $this->apiKey,
-                'Content-Type' => 'application/json',
-                'Accept' => 'application/json',
-            ],
-            'timeout' => 180,
-            'connect_timeout' => 180,
-            'proxy' => ''
-        ]);
-
-        $this->logger = $logger ?: new NullLogger();
-    }
-
     /**
      * @param string $apiKey
      * @param string $environment
-     * @param LoggerInterface|null $logger
-     * @return static
+     * @param string $projectId
      */
-    public static function from(string $apiKey, string $environment, ?LoggerInterface $logger = null): static
-    {
-        return new static($apiKey, $environment, $logger);
+    public function __construct(
+        protected string $apiKey,
+        protected string $environment,
+        protected string $projectId
+    ) {
+        //
     }
 
     /**
-     * @param LoggerInterface $logger
-     * @return void
+     * @return string
      */
-    public function setLogger(LoggerInterface $logger): void
+    public function resolveBaseUrl(): string
     {
-        $this->logger = $logger;
+        return "https://controller.{$this->environment}.pinecone.io";
+    }
+
+    /**
+     * @return array
+     */
+    protected function defaultHeaders(): array
+    {
+        return [
+            'Api-Key' => $this->apiKey,
+            'Content-Type' => 'application/json',
+        ];
+    }
+
+    /**
+     * This method contains your custom timeout settings.
+     * @return array
+     */
+    protected function defaultConfig(): array
+    {
+        return [
+            'timeout' => 180,
+            'connect_timeout' => 180,
+        ];
     }
 
     /**
