@@ -10,12 +10,12 @@ class Client extends Connector
     /**
      * @param string $apiKey
      * @param string $environment
-     * @param string $projectId
+     * @param string|null $projectId
      */
     public function __construct(
         protected string $apiKey,
         protected string $environment,
-        protected string $projectId
+        protected ?string $projectId = null
     ) {
         //
     }
