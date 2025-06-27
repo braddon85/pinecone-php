@@ -2,75 +2,66 @@
 
 namespace Probots\Pinecone;
 
-use Probots\Pinecone\Contracts\ClientContract;
-use Probots\Pinecone\Requests\Data\FetchVectors;
-use Probots\Pinecone\Requests\Exceptions\MissingHostException;
-use Probots\Pinecone\Resources\ControlResource;
-use Probots\Pinecone\Resources\DataResource;
-use Psr\Http\Message\RequestInterface;
-use Saloon\Http\Connector;
-use Saloon\Http\PendingRequest;
-use Saloon\Traits\Plugins\AcceptsJson;
-use Saloon\Traits\Plugins\AlwaysThrowOnErrors;
+use Probots\Pinecone\Resources\Data;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
-class Client extends Connector implements ClientContract
+class Client implements LoggerAwareInterface
 {
-    use AcceptsJson, AlwaysThrowOnErrors;
+    use HandlesGuzzle;
 
-    protected ?string $response = Response::class;
-
-    protected string $baseUrl = 'https://api.pinecone.io';
-
+    /**
+     * @param string $apiKey
+     * @param string $baseUrl
+     * @param LoggerInterface|null $logger
+     */
     public function __construct(
-        public string  $apiKey,
-        public ?string $indexHost = null,
-    ) {}
+        protected string $apiKey,
+        protected string $baseUrl,
+        protected ?LoggerInterface $logger = null,
+    ) {
+        $this->client = new \GuzzleHttp\Client([
+            'base_uri' => $this->baseUrl,
+            'headers' => [
+                'Api-Key' => $this->apiKey,
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
+            ],
+            'timeout' => 180,
+            'connect_timeout' => 180,
+            'proxy' => ''
+        ]);
 
-    // (Temporary) Workaround for https://github.com/probots-io/pinecone-php/issues/3
-    public function handlePsrRequest(RequestInterface $request, PendingRequest $pendingRequest): RequestInterface
-    {
-        return FetchVectors::queryIdsWorkaround($request);
-    }
-
-    public function resolveBaseUrl(): string
-    {
-        return $this->baseUrl;
-    }
-
-    public function control(): ControlResource
-    {
-        return new ControlResource($this);
+        $this->logger = $logger ?: new NullLogger();
     }
 
     /**
-     * @throws MissingHostException
+     * @param string $apiKey
+     * @param string $environment
+     * @param LoggerInterface|null $logger
+     * @return static
      */
-    public function data(): DataResource
+    public static function from(string $apiKey, string $environment, ?LoggerInterface $logger = null): static
     {
-        $this->baseUrl = $this->indexHost;
-
-        if (!$this->indexHost) {
-            throw new MissingHostException('Index host is missing');
-        }
-
-        return new DataResource($this);
+        return new static($apiKey, $environment, $logger);
     }
 
-    public function setIndexHost(string $indexHost): self
+    /**
+     * @param LoggerInterface $logger
+     * @return void
+     */
+    public function setLogger(LoggerInterface $logger): void
     {
-        $this->indexHost = $indexHost;
-
-        return $this;
+        $this->logger = $logger;
     }
 
-
-    protected function defaultHeaders(): array
+    /**
+     * @return Data
+     */
+    public function data(): Data
     {
-        return [
-            'Api-Key'      => $this->apiKey,
-            'Accept'       => 'application/json;',
-            'Content-Type' => 'application/json'
-        ];
+        return new Data($this);
     }
-
 }
