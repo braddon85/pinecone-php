@@ -1,5 +1,5 @@
 {
-  "name": "probots/pinecone",
+  "name": "probots-io/pinecone",
   "description": "Unofficial PHP Client for Pinecone Vector Database (pinecone.io)",
   "type": "library",
   "homepage": "https://probots.io",
@@ -23,8 +23,7 @@
   },
   "autoload": {
     "psr-4": {
-      "Probots\\Pinecone\\": "src/",
-      "Tests\\": "tests/"
+      "Probots\\Pinecone\\": "src/"
     }
   },
   "require-dev": {
