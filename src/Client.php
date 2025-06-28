@@ -7,15 +7,17 @@ use Saloon\Traits\Plugins\AcceptsJson;
 
 class Client extends Connector
 {
+    use AcceptsJson;
+
     /**
      * @param string $apiKey
      * @param string $environment
-     * @param string|null $projectId
+     * @param string $projectId
      */
     public function __construct(
         protected string $apiKey,
         protected string $environment,
-        protected ?string $projectId = null
+        protected string $projectId
     ) {
         //
     }
@@ -35,12 +37,11 @@ class Client extends Connector
     {
         return [
             'Api-Key' => $this->apiKey,
-            'Content-Type' => 'application/json',
         ];
     }
 
     /**
-     * This method contains your custom timeout settings.
+     * This is your required customization for timeouts.
      * @return array
      */
     protected function defaultConfig(): array
@@ -49,13 +50,5 @@ class Client extends Connector
             'timeout' => 180,
             'connect_timeout' => 180,
         ];
-    }
-
-    /**
-     * @return Data
-     */
-    public function data(): Data
-    {
-        return new Data($this);
     }
 }
