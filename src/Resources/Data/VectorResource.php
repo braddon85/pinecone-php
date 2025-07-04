@@ -83,4 +83,17 @@ class VectorResource extends Resource
             namespace: $namespace
         ));
     }
+
+    public function listIds(
+        ?string $namespace = null,
+        ?int $limit = null,
+        ?string $paginationToken = null
+    ): Response
+    {
+        return $this->connector->send(new Data\ListVectors(
+            namespace: $namespace,
+            limit: $limit,
+            paginationToken: $paginationToken
+        ));
+    }
 }
